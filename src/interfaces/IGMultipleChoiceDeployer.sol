@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 interface IGMultipleChoiceDeployer {
     /// @notice Get the parameters to be used in constructing the game, set transiently during game creation.
