@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 import "./GMultipleChoiceDeployer.sol";
 
@@ -32,7 +32,17 @@ contract GMultipleChoiceFactory is GMultipleChoiceDeployer {
         if (msg.sender == owner) {
             playerUpperLimit = type(uint256).max;
         }
-        gameAddress = deploy(address(this), msg.sender, minAmount, maxAmount, closeBetTime, lotteryDrawTime, playerUpperLimit, choose);
+        Parameters memory params = Parameters(
+            address(this),
+            msg.sender,
+            minAmount,
+            maxAmount,
+            closeBetTime,
+            lotteryDrawTime,
+            playerUpperLimit,
+            choose
+        );
+        gameAddress = deploy(params);
         gameList.push(gameAddress);
         userGames[msg.sender].push(gameAddress);
     }
