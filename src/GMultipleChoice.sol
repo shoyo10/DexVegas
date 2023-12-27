@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IGMultipleChoiceParameters, IGMultipleChoiceDeployer } from "./interfaces/IGMultipleChoiceDeployer.sol";
+import { IGMultipleChoiceDeployerParameters, IGMultipleChoiceDeployer } from "./interfaces/IGMultipleChoiceDeployer.sol";
 import "./interfaces/IGMultipleChoice.sol";
 import "./DToken.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceParameters {
+contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerParameters {
     struct LotteryTicket {
         uint256 optionIndex;
         uint256 amount;
@@ -18,7 +18,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceParameters
     string public gameName;
     string public gameDescription;
     address public immutable factory;
-    address public immutable initiator;
+    address public immutable creator;
     uint256 public immutable minAmount; 
     uint256 public immutable maxAmount;
     uint public immutable startBetTime;
@@ -44,7 +44,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceParameters
         gameName = params.name;
         gameDescription = params.description;
         factory = params.factory;
-        initiator = params.initiator;
+        creator = params.creator;
         minAmount = params.minAmount;
         maxAmount = params.maxAmount;
         startBetTime = params.startBetTime;
@@ -78,7 +78,9 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceParameters
         // transfer buyer betting amount to this contract
         token.transferFrom(buyer, address(this), amount);
         // mint a NFT to buyer
-        _safeMint(buyer, (tokenId = _nextId++));
+        tokenId = _nextId;
+        _nextId++;
+        _safeMint(buyer, tokenId);
 
         _lotteryTickets[tokenId] = LotteryTicket({
             optionIndex: optionIndex,

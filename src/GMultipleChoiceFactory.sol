@@ -2,11 +2,13 @@
 pragma solidity ^0.8.23;
 
 import "./GMultipleChoiceDeployer.sol";
+import "./interfaces/IGMultipleChoiceFactory.sol";
 
-contract GMultipleChoiceFactory is GMultipleChoiceDeployer {
+contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeployer {
     address public owner;
     address[] public gameList;
     address public dToken;
+    /// @dev The user address to game address list
     mapping(address => address[]) public userGames;
     uint256 defaultGamePlayerUpperLimit = 4;
 
@@ -22,45 +24,36 @@ contract GMultipleChoiceFactory is GMultipleChoiceDeployer {
 
     /**
      * @notice user can create a game
-     * @param name name of the game
-     * @param description description of the game
-     * @param minAmount minimum bet amount
-     * @param maxAmount maximum bet amount
-     * @param closeBetTime end time for betting
-     * @param lotteryDrawTime after this time, can determine the result of the game
-     * @param options options for the game
      */
-    function createGame(
-        string calldata name,
-        string calldata description,
-        uint256 minAmount, 
-        uint256 maxAmount,
-        uint startBetTime,
-        uint closeBetTime,
-        uint lotteryDrawTime,
-        string[] memory options
-    ) external returns (address gameAddress) {
+    function createGame(CreateGameParams calldata params_) external returns (address gameAddress) {
         uint256 playerUpperLimit = defaultGamePlayerUpperLimit;
-        if (msg.sender == owner) {
+        address creator = msg.sender;
+        if (creator == owner) {
             playerUpperLimit = type(uint256).max;
+        }
+        require(params_.playerUpperLimit <= playerUpperLimit, "playerUpperLimit must be less than defaultGamePlayerUpperLimit");
+        if (params_.playerUpperLimit > 0) {
+            playerUpperLimit = params_.playerUpperLimit;
         }
         Parameters memory params = Parameters({
             dToken: dToken,
-            name: name,
-            description: description,
+            name: params_.name,
+            description: params_.description,
             factory: address(this),
-            initiator: msg.sender,
-            minAmount: minAmount,
-            maxAmount: maxAmount,
-            startBetTime: startBetTime,
-            closeBetTime: closeBetTime,
-            lotteryDrawTime: lotteryDrawTime,
+            creator: creator,
+            minAmount: params_.minAmount,
+            maxAmount: params_.maxAmount,
+            startBetTime: params_.startBetTime,
+            closeBetTime: params_.closeBetTime,
+            lotteryDrawTime: params_.lotteryDrawTime,
             playerUpperLimit: playerUpperLimit,
-            options: options
+            options: params_.options
         });
         gameAddress = deploy(params);
         gameList.push(gameAddress);
-        userGames[msg.sender].push(gameAddress);
+        userGames[creator].push(gameAddress);
+
+        emit GameMultipleChoiceCreated(creator, gameAddress);
     }
 
     function setPlayerUpperLimit(uint256 limit) external onlyOwner {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-interface IGMultipleChoiceParameters {
+interface IGMultipleChoiceDeployerParameters {
     struct Parameters {
         address dToken;
         string name;
         string description;
         address factory;
-        address initiator;
+        address creator;
         uint256 minAmount; 
         uint256 maxAmount;
         uint startBetTime;
@@ -18,6 +18,6 @@ interface IGMultipleChoiceParameters {
     }
 }
 
-interface IGMultipleChoiceDeployer is IGMultipleChoiceParameters {
+interface IGMultipleChoiceDeployer is IGMultipleChoiceDeployerParameters {
     function getParameters() external view returns (Parameters memory);
 }
