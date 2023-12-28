@@ -26,8 +26,11 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
     uint public immutable lotteryDrawTime;
     uint public immutable playerUpperLimit;
     string[] public options;
-    uint public result;
     address public dToken;
+
+    /// @notice The index of the answer
+    /// @dev The index of the answer; -1 if there is no answer yet
+    int public answerIndex = -1;
 
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
@@ -96,5 +99,9 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
 
     function getBlockTimestamp() internal view returns (uint256) {
         return block.timestamp;
+    }
+
+    function getOptionsLength() external view returns (uint256) {
+        return options.length;
     }
 }

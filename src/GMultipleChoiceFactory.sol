@@ -6,11 +6,11 @@ import "./interfaces/IGMultipleChoiceFactory.sol";
 
 contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeployer {
     address public owner;
-    address[] public gameList;
+    address[] internal gameList;
     address public dToken;
     /// @dev The user address to game address list
     mapping(address => address[]) public userGames;
-    uint256 defaultGamePlayerUpperLimit = 4;
+    uint256 public defaultGamePlayerUpperLimit = 4;
 
     constructor(address dToken_) {
         owner = msg.sender;
@@ -59,5 +59,50 @@ contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeplo
     function setPlayerUpperLimit(uint256 limit) external onlyOwner {
         require(limit > 0, "Limit must be greater than 0");
         defaultGamePlayerUpperLimit = limit;
+    }
+
+    /**
+     * @notice get multiple choice game list
+     * @param startIdx The start index of game list
+     * @param endIdx The end index of game list
+     * @return The list of game address
+     */
+    function getGameList(uint startIdx, uint endIdx) external view returns (address[] memory) {
+        require(startIdx < endIdx, "startIdx must be less than endIdx");
+        require(endIdx <= gameList.length, "endIdx must be less than gameList length");
+        address[] memory list = new address[](endIdx - startIdx);
+        for (uint i = startIdx; i < endIdx; i++) {
+            list[i - startIdx] = gameList[i];
+        }
+        return list;
+    }
+
+    /**
+     * @notice get multiple choice game list length
+     * @return The length of game list
+     */
+    function getGameListLength() external view returns (uint256) {
+        return gameList.length;
+    }
+
+    /**
+     * @notice get user owned game list
+     * @param user The user address
+     * @param startIdx The start index of game list
+     * @param limit The limit of game list
+     * @return The list of game address
+     */
+    function userOwnedGames(address user, uint startIdx, uint limit) external view returns (address[] memory) {
+        address[] memory games = userGames[user];
+        require(startIdx < games.length, "startIdx must be less than games length");
+        uint endIdx = startIdx + limit;
+        if (endIdx > games.length) {
+            endIdx = games.length;
+        }
+        address[] memory list = new address[](endIdx - startIdx);
+        for (uint i = startIdx; i < endIdx; i++) {
+            list[i - startIdx] = games[i];
+        }
+        return list;
     }
 }
