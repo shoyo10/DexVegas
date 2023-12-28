@@ -44,7 +44,7 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
     }
 
     function test_constructor() public {
-        assertEq(factory.owner(), address(this));
+        assertEq(factory.admin(), address(this));
         assertEq(factory.dToken(), address(dToken));
     }
 
@@ -124,5 +124,35 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
         assertEq(game.minAmount(), params.minAmount);
         assertEq(game.maxAmount(), params.maxAmount);
         assertEq(game.playerUpperLimit(), params.playerUpperLimit);
+    }
+
+    function test_admin_createGame() public {
+        string[] memory options = new string[](2);
+        options[0] = "pikachu";
+        options[1] = "charmander";
+        CreateGameParams memory params = CreateGameParams({
+            name: "pokemon",
+            description: "pokemon game",
+            minAmount: 0,
+            maxAmount: 0,
+            startBetTime: 50,
+            closeBetTime: 150,
+            lotteryDrawTime: 200,
+            options: options,
+            playerUpperLimit: 0
+        });
+        vm.expectEmit(true, false, true, true);
+        emit GameMultipleChoiceCreated(address(this), address(0));
+        address gameAddress2 = factory.createGame(params);
+
+        assertEq(factory.getGameListLength(), 2);
+        assertEq(factory.getGameList(1, 2)[0], gameAddress2);
+        address[] memory ownedGames = factory.userOwnedGames(address(this), 0, 2);
+        assertEq(ownedGames.length, 1);
+        assertEq(ownedGames[0], gameAddress2);
+        assertEq(factory.getParameters().options.length, 0);
+
+        GMultipleChoice game = GMultipleChoice(gameAddress2);
+        assertEq(game.playerUpperLimit(), type(uint256).max);
     }
 }

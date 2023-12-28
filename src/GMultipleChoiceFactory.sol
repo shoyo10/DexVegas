@@ -5,7 +5,7 @@ import "./GMultipleChoiceDeployer.sol";
 import "./interfaces/IGMultipleChoiceFactory.sol";
 
 contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeployer {
-    address public owner;
+    address public admin;
     address[] internal gameList;
     address public dToken;
     /// @dev The user address to game address list
@@ -13,12 +13,12 @@ contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeplo
     uint256 public defaultGamePlayerUpperLimit = 4;
 
     constructor(address dToken_) {
-        owner = msg.sender;
+        admin = msg.sender;
         dToken = dToken_;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function");
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only admin can call this function");
         _;
     }
 
@@ -28,7 +28,7 @@ contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeplo
     function createGame(CreateGameParams calldata params_) external returns (address gameAddress) {
         uint256 playerUpperLimit = defaultGamePlayerUpperLimit;
         address creator = msg.sender;
-        if (creator == owner) {
+        if (creator == admin) {
             playerUpperLimit = type(uint256).max;
         }
         require(params_.playerUpperLimit <= playerUpperLimit, "playerUpperLimit must be less than defaultGamePlayerUpperLimit");
@@ -56,7 +56,7 @@ contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeplo
         emit GameMultipleChoiceCreated(creator, gameAddress);
     }
 
-    function setPlayerUpperLimit(uint256 limit) external onlyOwner {
+    function setPlayerUpperLimit(uint256 limit) external onlyAdmin {
         require(limit > 0, "Limit must be greater than 0");
         defaultGamePlayerUpperLimit = limit;
     }
