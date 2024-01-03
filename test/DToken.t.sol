@@ -10,7 +10,7 @@ contract DTokenTest is Test, IDToken {
     address public user1;
 
     function setUp() public {
-        user1 = payable(makeAddr("user1"));
+        user1 = makeAddr("user1");
     }
 
     function test_constructor() public {

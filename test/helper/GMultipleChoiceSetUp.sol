@@ -19,8 +19,8 @@ contract GMultipleChoiceSetUp is Test, IGMultipleChoiceFactory {
     uint public lotteryDrawTime = 1704250205;
 
     function setUp() public virtual {
-        admin = payable(makeAddr("admin"));
-        gameCreator = payable(makeAddr("gameCreator"));
+        admin = makeAddr("admin");
+        gameCreator = makeAddr("gameCreator");
 
         vm.startPrank(admin);
         MyERC20 underlyingToken = new MyERC20("Underlying Token", "UTKN", 18);

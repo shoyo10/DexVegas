@@ -16,7 +16,7 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
     CreateGameParams public createGameParams;
 
     function setUp() public {
-        user1 = payable(makeAddr("user1"));
+        user1 = makeAddr("user1");
 
         MyERC20 underlyingToken = new MyERC20("Underlying Token", "UTKN", 18);
         dToken = new DToken("DToken", "DTKN", address(underlyingToken), 1e18);
