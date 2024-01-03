@@ -8,16 +8,6 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Math } from '@openzeppelin/contracts/utils/math/Math.sol';
 
 contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerParameters {
-    enum LotteryTicketClaimed {
-        NotClaimed,
-        Claimed
-    }
-    struct LotteryTicket {
-        uint256 optionIndex;
-        uint256 amount;
-        LotteryTicketClaimed claimStatus;
-    }
-
     uint256 private constant BASE = 1e18;
 
     /// @dev The token ID lottery ticket data
@@ -107,8 +97,9 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
         bool ok;
        (ok, totalBettingAmount) = Math.tryAdd(totalBettingAmount, amount);
        require(ok, "totalBettingAmount overflow");
-        (ok, optionBettingAmount[optionIndex]) = Math.tryAdd(optionBettingAmount[optionIndex], amount);
-        require(ok, "optionBettingAmount overflow");
+
+        optionBettingAmount[optionIndex] = optionBettingAmount[optionIndex]+amount;
+        
         // transfer buyer betting amount to this contract
         token.transferFrom(buyer, address(this), amount);
         // mint a NFT to buyer
@@ -135,7 +126,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
         require(msg.sender == creator, "only creator can set answer index");
         require(answerIndex == -1, "answer index has been set");
         require(index >= 0 && index < options.length, "answer index is invalid");
-        require(lotteryDrawTime < getBlockTimestamp(), "lottery draw time is not reached");
+        require(lotteryDrawTime <= getBlockTimestamp(), "lottery draw time is not reached");
 
         answerIndex = int(index);
 
@@ -162,8 +153,9 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
      * @notice winner can claim prize token
      * @dev winner can claim prize token once after answer was set
      * @param tokenId The id of NFT
+     * @return claimAmount The amount of prize token
      */
-    function winnerClaimAward(uint256 tokenId) external {
+    function winnerClaimAward(uint256 tokenId) external returns (uint256 claimAmount) {
         require(answerIndex >= 0, "answer index is not set");
         require(ownerOf(tokenId) == msg.sender, "only NFT owner can claim");
         LotteryTicket memory ticket = _lotteryTickets[tokenId];
@@ -172,11 +164,11 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
 
         _lotteryTickets[tokenId].claimStatus = LotteryTicketClaimed.Claimed;
         DToken token = DToken(dToken);
-        uint256 claimAmount = totalAwardAmount * ticket.amount / optionBettingAmount[ticket.optionIndex];
+        claimAmount = totalAwardAmount * ticket.amount / optionBettingAmount[ticket.optionIndex];
         token.transfer(msg.sender, claimAmount);
 
         emit WinnerClaim(msg.sender, tokenId, claimAmount);
-    }    
+    }
 
     function getBlockTimestamp() internal view returns (uint256) {
         return block.timestamp;
