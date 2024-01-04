@@ -7,11 +7,16 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 import "./ExponentialNoError.sol";
 import "./interfaces/IDToken.sol";
 import "./interfaces/EIP20NonStandardInterface.sol";
+import { IFlashLoan, IFlashLoanReceiver } from "./interfaces/IFlashLoan.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract DToken is ERC20, IDToken, ExponentialNoError, ReentrancyGuard {
+contract DToken is ERC20, IDToken, IFlashLoan, ExponentialNoError, ReentrancyGuard {
     address public admin;
     address public underlyingToken;
     uint internal exchangeRateMantissa;
+    /// flashLoanFee in hundredths of a bip, i.e. 1e-6; 100 means 0.01%
+    uint public flashLoanFee = 100;
 
     /**
      * @notice Initialize the game token
@@ -74,5 +79,23 @@ contract DToken is ERC20, IDToken, ExponentialNoError, ReentrancyGuard {
         // Calculate the amount that was actually transferred
         uint balanceAfter = IERC20(underlying_).balanceOf(address(this));
         return balanceAfter - balanceBefore;
+    }
+
+    /// @inheritdoc IFlashLoan
+    function flashLoan(
+      address receiverAddress,
+      uint256 amount,
+      bytes calldata params
+    ) external {
+        address underlying_ = underlyingToken;
+        uint256 fee = Math.mulDiv(amount, flashLoanFee, 1e6, Math.Rounding.Ceil);
+        SafeERC20.safeTransfer(IERC20(underlying_), receiverAddress, amount);
+        require(
+            IFlashLoanReceiver(receiverAddress).executeOperation(underlying_, amount, fee, msg.sender, params)
+            , "FLASHLOAN_EXEC_FAILED"
+        );
+        uint256 repayAmount = amount + fee;
+        SafeERC20.safeTransferFrom(IERC20(underlying_), receiverAddress, address(this), repayAmount);
+        emit FlashLoan(receiverAddress, msg.sender, underlying_, amount, fee);
     }
 }
