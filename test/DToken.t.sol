@@ -80,7 +80,7 @@ contract DTokenTest is Test, IDToken {
     function test_mint_underlying_token_decimal_6() public {
         MyERC20 underlyingToken = new MyERC20("Underlying Token", "UTKN", 6);
         // underlyingToken 與 dToken 的 exchange rate 為 1:1
-        DToken token = new DToken("DToken", "DTKN", address(underlyingToken), 1e18);
+        DToken token = new DToken("DToken", "DTKN", address(underlyingToken), 1e6);
 
         // user1 mints dToken by provide 10 underlying tokens
         uint mintAmount = 10 * 10 ** underlyingToken.decimals();
@@ -91,14 +91,14 @@ contract DTokenTest is Test, IDToken {
         vm.stopPrank();
 
         assertEq(underlyingToken.balanceOf(address(token)), mintAmount);
-        assertEq(token.balanceOf(user1), mintAmount);
-        assertEq(token.totalSupply(), mintAmount);
+        assertEq(token.balanceOf(user1), mintAmount*1e12);
+        assertEq(token.totalSupply(), mintAmount*1e12);
     }
 
     function test_flashLoan() public {
         MyERC20 underlyingToken = new MyERC20("Underlying Token", "UTKN", 6);
         // underlyingToken 與 dToken 的 exchange rate 為 1:1
-        DToken token = new DToken("DToken", "DTKN", address(underlyingToken), 1e18);
+        DToken token = new DToken("DToken", "DTKN", address(underlyingToken), 1e6);
 
         // user1 mints dToken by provide 10 underlying tokens
         uint mintAmount = 10 * 10 ** underlyingToken.decimals();
@@ -109,9 +109,8 @@ contract DTokenTest is Test, IDToken {
         vm.stopPrank();
 
         require(underlyingToken.balanceOf(address(token)) == mintAmount);
-        require(token.balanceOf(user1) == mintAmount);
-        require(token.totalSupply() == mintAmount);
-        console.log(underlyingToken.balanceOf(address(token)));
+        require(token.balanceOf(user1) == mintAmount*1e12);
+        require(token.totalSupply() == mintAmount*1e12);
 
         address flashLoaner = makeAddr("flashLoaner");
         vm.startPrank(flashLoaner);
@@ -124,7 +123,6 @@ contract DTokenTest is Test, IDToken {
         vm.stopPrank();
         
         assertEq(underlyingToken.balanceOf(address(token)), mintAmount+expectFee);
-        console.log(underlyingToken.balanceOf(address(token)));
     }
 
     function test_redeem_exchange_rate_1e18() public {
