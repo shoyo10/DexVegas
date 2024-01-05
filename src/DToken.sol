@@ -81,6 +81,48 @@ contract DToken is ERC20, IDToken, IFlashLoan, ExponentialNoError, ReentrancyGua
         return balanceAfter - balanceBefore;
     }
 
+    /**
+     * @notice Sender redeems dTokens to get underlying tokens back
+     * @param redeemTokens_ The number of dTokens to redeem into underlying
+     */
+    function redeem(uint redeemTokens_) external nonReentrant {
+        require(redeemTokens_ > 0, "redeem amount must be greater than 0");
+        address redeemer = msg.sender;
+        
+        // redeemAmount = redeemTokens * exchangeRate
+        Exp memory exchangeRate = Exp({mantissa: exchangeRateMantissa});
+        uint redeemAmount = mul_ScalarTruncate(exchangeRate, redeemTokens_);
+        require(redeemAmount > 0, "input redeemTokens is not enough to redeem any underlying token");
+        require(IERC20(underlyingToken).balanceOf(address(this)) >= redeemAmount, "INSUFFICIENT_CASH");
+
+        _burn(redeemer, redeemTokens_);
+        
+        transferOut(redeemer, redeemAmount);
+        
+        emit Redeem(redeemer, redeemAmount, redeemTokens_);
+    }
+
+    function transferOut(address to, uint amount) internal {
+        EIP20NonStandardInterface token = EIP20NonStandardInterface(underlyingToken);
+        token.transfer(to, amount);
+
+        bool success;
+        assembly {
+            switch returndatasize()
+                case 0 {                      // This is a non-standard ERC-20
+                    success := not(0)          // set success to true
+                }
+                case 32 {                     // This is a compliant ERC-20
+                    returndatacopy(0, 0, 32)
+                    success := mload(0)        // Set `success = returndata` of override external call
+                }
+                default {                     // This is an excessively non-compliant ERC-20, revert.
+                    revert(0, 0)
+                }
+        }
+        require(success, "TOKEN_TRANSFER_OUT_FAILED");
+    }
+
     /// @inheritdoc IFlashLoan
     function flashLoan(
       address receiverAddress,
