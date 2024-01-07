@@ -6,6 +6,7 @@ import "./interfaces/IGMultipleChoice.sol";
 import "./DToken.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Math } from '@openzeppelin/contracts/utils/math/Math.sol';
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerParameters {
     uint256 private constant BASE = 1e18;
@@ -31,6 +32,8 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
     uint public immutable playerUpperLimit;
     string[] public options;
     address public dToken;
+    /// @notice player addresses whitelist merkle root
+    bytes32 public whitelistMerkleRoot;
 
     /// @notice The index of the answer
     /// @dev The index of the answer; -1 if there is no answer yet
@@ -71,6 +74,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
         lotteryDrawTime = params.lotteryDrawTime;
         playerUpperLimit = params.playerUpperLimit;
         options = params.options;
+        whitelistMerkleRoot = params.whitelistMerkleRoot;
     }
 
     /**
@@ -78,9 +82,10 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
      * @dev user provide DToken and make a choice to bet the game and get a NFT
      * @param amount The amount of DToken to bet
      * @param optionIndex The index of option to bet
+     * @param merkleProof The merkle proof of user addresses
      * @return tokenId The id of NFT
      */
-    function betting(uint256 amount, uint256 optionIndex) external returns (uint256 tokenId) {
+    function betting(uint256 amount, uint256 optionIndex, bytes32[] memory merkleProof) external returns (uint256 tokenId) {
         uint time = getBlockTimestamp();
         DToken token = DToken(dToken);
         address buyer = msg.sender;
@@ -94,6 +99,10 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
             require(amount <= maxAmount, "betting amount is invalid");
         }
         require(_nextId  <= playerUpperLimit, "game player upper limit reached");
+        if (whitelistMerkleRoot != bytes32(0)) {
+            require(verifyWhitelist(buyer, merkleProof), "buyer is not in whitelist");
+        }
+
         bool ok;
        (ok, totalBettingAmount) = Math.tryAdd(totalBettingAmount, amount);
        require(ok, "totalBettingAmount overflow");
@@ -187,5 +196,10 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
     {
         LotteryTicket memory ticket = _lotteryTickets[tokenId];
         return (ticket.optionIndex, ticket.amount, ticket.claimStatus);
+    }
+
+    function verifyWhitelist(address account, bytes32[] memory merkleProof) internal view returns (bool) {
+        bytes32 node = keccak256(abi.encodePacked(account));
+        return MerkleProof.verify(merkleProof, whitelistMerkleRoot, node);
     }
 }

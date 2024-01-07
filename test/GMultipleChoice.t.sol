@@ -25,23 +25,24 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
 
     function test_betting() public {
         // test player1 bet 10 DToken on option 0
+        bytes32[] memory merkleProof = new bytes32[](0);
         vm.startPrank(player1);
         vm.expectRevert(bytes("game is not started"));
-        multipleChoiceGame.betting(10, 0);
+        multipleChoiceGame.betting(10, 0, merkleProof);
         
         vm.warp(startBetTime);
         vm.expectRevert(bytes("buyer has not enough DToken"));
-        multipleChoiceGame.betting(10, 0);
+        multipleChoiceGame.betting(10, 0, merkleProof);
 
         deal(address(dToken), player1, 10000);
 
         vm.expectRevert(bytes("optionIndex is invalid"));
-        multipleChoiceGame.betting(10, 2);
+        multipleChoiceGame.betting(10, 2, merkleProof);
 
         dToken.approve(gameAddress, 100);
         vm.expectEmit(true, true, true, true);
         emit IGMultipleChoice.Betting(player1, 1, 10, 0);
-        uint256 tokenId = multipleChoiceGame.betting(10, 0);
+        uint256 tokenId = multipleChoiceGame.betting(10, 0, merkleProof);
         assertEq(tokenId, 1);
         vm.stopPrank();
 
@@ -60,7 +61,7 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         dToken.approve(gameAddress, 10000);
         vm.expectEmit(true, true, true, true);
         emit IGMultipleChoice.Betting(player1, 2, 8000, 1);
-        uint256 tokenId2 = multipleChoiceGame.betting(8000, 1);
+        uint256 tokenId2 = multipleChoiceGame.betting(8000, 1, merkleProof);
         assertEq(tokenId2, 2);
         vm.stopPrank();
 
@@ -79,7 +80,7 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         dToken.approve(gameAddress, 10000);
         vm.expectEmit(true, true, true, true);
         emit IGMultipleChoice.Betting(player2, 3, 1000, 0);
-        uint256 tokenId3 = multipleChoiceGame.betting(1000, 0);
+        uint256 tokenId3 = multipleChoiceGame.betting(1000, 0, merkleProof);
         assertEq(tokenId3, 3);
         vm.stopPrank();
 
@@ -96,26 +97,79 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         vm.warp(closeBetTime);
         vm.startPrank(player2);
         vm.expectRevert(bytes("game is closed"));
-        multipleChoiceGame.betting(1, 0);
+        multipleChoiceGame.betting(1, 0, merkleProof);
         vm.stopPrank();
     }
 
     function test_betting_total_amount_overflow() public {
         vm.warp(startBetTime);
 
+        bytes32[] memory merkleProof = new bytes32[](0);
         vm.startPrank(player1);
         deal(address(dToken), player1, type(uint256).max);
         dToken.approve(gameAddress, type(uint256).max);
         vm.expectEmit(true, true, true, true);
         emit IGMultipleChoice.Betting(player1, 1, type(uint256).max, 0);
-        multipleChoiceGame.betting(type(uint256).max, 0);
+        multipleChoiceGame.betting(type(uint256).max, 0, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player2);
         deal(address(dToken), player2, 10000);
         dToken.approve(gameAddress, 10000);
         vm.expectRevert(bytes("totalBettingAmount overflow"));
-        multipleChoiceGame.betting(1, 1);
+        multipleChoiceGame.betting(1, 1, merkleProof);
+        vm.stopPrank();
+    }
+
+    function test_betting_whitelist() public {
+        vm.warp(startBetTime);
+
+        /**
+         * merkle root is generated from helper/merkletreejs/merkletree.js
+         * player1, player2, player3, and gameCreator are in whitelist
+         * player1 address is 0x7026B763CBE7d4E72049EA67E89326432a50ef84
+         * player2 address is 0xEb0A3b7B96C1883858292F0039161abD287E3324
+         * player3 address is 0xcC37919fDb8E2949328cDB49E8bAcCb870d0c9f3
+         * gameCreator address is 0x228EBeEbaCb93F12C10d34aBFDCeaF400e894F45
+         */
+
+        // create a game with whitelist setting
+        vm.startPrank(gameCreator);
+        string[] memory options = new string[](2);
+        options[0] = "pikachu";
+        options[1] = "charmander";
+        createGameParams = CreateGameParams({
+            name: "pokemon",
+            description: "pokemon game",
+            minAmount: 0,
+            maxAmount: 0,
+            startBetTime: startBetTime,
+            closeBetTime: closeBetTime,
+            lotteryDrawTime: lotteryDrawTime,
+            options: options,
+            playerUpperLimit: 0,
+            whitelistMerkleRoot: 0x9f593cdf92e93670ace4ebc0c7a8568c3e943e6a6324cc08cb31e1fdb73a8d5b
+        });
+        address gameAddress2 = factory.createGame(createGameParams);
+        vm.stopPrank();
+
+        vm.startPrank(player1);
+        deal(address(dToken), player1, 10000);
+        dToken.approve(gameAddress2, 100);
+        bytes32[] memory merkleProof = new bytes32[](2);
+        merkleProof[0] = 0x305d9619d81293188079d4bd630f530b1b7dc7ead576467cf09f3bdd42da00f7;
+        merkleProof[1] = 0x39aba7c26db2ffabfe00aa49ad0a1d90455a486b965819b010b648272c9b0a8d;
+        vm.expectEmit(true, true, true, true);
+        emit IGMultipleChoice.Betting(player1, 1, 10, 0);
+        uint256 tokenId = IGMultipleChoice(gameAddress2).betting(10, 0, merkleProof);
+        assertEq(tokenId, 1);
+        vm.stopPrank();
+        
+        vm.startPrank(admin);
+        deal(address(dToken), admin, 10000);
+        dToken.approve(gameAddress2, 100);
+        vm.expectRevert("buyer is not in whitelist");
+        IGMultipleChoice(gameAddress2).betting(10, 0, merkleProof);
         vm.stopPrank();
     }
 
@@ -126,20 +180,21 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         deal(address(dToken), player2, type(uint256).max);
         deal(address(dToken), player3, type(uint256).max);
 
+        bytes32[] memory merkleProof = new bytes32[](0);
         vm.startPrank(player1);
         dToken.approve(gameAddress, type(uint256).max);
-        multipleChoiceGame.betting(50, 0);
+        multipleChoiceGame.betting(50, 0, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player2);
         dToken.approve(gameAddress, type(uint256).max);
-        multipleChoiceGame.betting(30, 1);
+        multipleChoiceGame.betting(30, 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player3);
         dToken.approve(gameAddress, type(uint256).max);
-        multipleChoiceGame.betting(20, 1);
-        multipleChoiceGame.betting(40, 1);
+        multipleChoiceGame.betting(20, 1, merkleProof);
+        multipleChoiceGame.betting(40, 1, merkleProof);
         vm.stopPrank();
 
         // start test setAnswer
@@ -174,20 +229,21 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         deal(address(dToken), player2, type(uint256).max);
         deal(address(dToken), player3, type(uint256).max);
 
+        bytes32[] memory merkleProof = new bytes32[](0);
         vm.startPrank(player1);
         dToken.approve(gameAddress, type(uint256).max);
-        multipleChoiceGame.betting(500, 0);
+        multipleChoiceGame.betting(500, 0, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player2);
         dToken.approve(gameAddress, type(uint256).max);
-        multipleChoiceGame.betting(300, 1);
+        multipleChoiceGame.betting(300, 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player3);
         dToken.approve(gameAddress, type(uint256).max);
-        multipleChoiceGame.betting(200, 1);
-        multipleChoiceGame.betting(400, 1);
+        multipleChoiceGame.betting(200, 1, merkleProof);
+        multipleChoiceGame.betting(400, 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(gameCreator);
@@ -207,20 +263,21 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         deal(address(dToken), player2, 10000);
         deal(address(dToken), player3, 10000);
 
+        bytes32[] memory merkleProof = new bytes32[](0);
         vm.startPrank(player1);
         dToken.approve(gameAddress, type(uint256).max);
-        uint256 tokenId1 = multipleChoiceGame.betting(50, 0);
+        uint256 tokenId1 = multipleChoiceGame.betting(50, 0, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player2);
         dToken.approve(gameAddress, type(uint256).max);
-        uint256 tokenId2 = multipleChoiceGame.betting(30, 1);
+        uint256 tokenId2 = multipleChoiceGame.betting(30, 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player3);
         dToken.approve(gameAddress, type(uint256).max);
-        uint256 tokenId3 = multipleChoiceGame.betting(20, 1);
-        uint256 tokenId4 = multipleChoiceGame.betting(40, 1);
+        uint256 tokenId3 = multipleChoiceGame.betting(20, 1, merkleProof);
+        uint256 tokenId4 = multipleChoiceGame.betting(40, 1, merkleProof);
         vm.stopPrank();
 
         assertEq(dToken.balanceOf(gameAddress), 140);
@@ -289,20 +346,21 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
         deal(address(dToken), player2, 10000);
         deal(address(dToken), player3, 10000);
 
+        bytes32[] memory merkleProof = new bytes32[](0);
         vm.startPrank(player1);
         dToken.approve(gameAddress, type(uint256).max);
-         multipleChoiceGame.betting(500, 0);
+         multipleChoiceGame.betting(500, 0, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player2);
         dToken.approve(gameAddress, type(uint256).max);
-        uint256 tokenId2 = multipleChoiceGame.betting(300, 1);
+        uint256 tokenId2 = multipleChoiceGame.betting(300, 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player3);
         dToken.approve(gameAddress, type(uint256).max);
-        uint256 tokenId3 = multipleChoiceGame.betting(200, 1);
-        uint256 tokenId4 = multipleChoiceGame.betting(400, 1);
+        uint256 tokenId3 = multipleChoiceGame.betting(200, 1, merkleProof);
+        uint256 tokenId4 = multipleChoiceGame.betting(400, 1, merkleProof);
         vm.stopPrank();
 
         assertEq(dToken.balanceOf(gameAddress), 1400);

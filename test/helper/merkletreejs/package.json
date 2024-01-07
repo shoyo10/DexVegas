@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@ethersproject/keccak256": "^5.7.0",
+    "merkletreejs": "^0.3.11"
+  }
+}
