@@ -62,6 +62,12 @@ This is a multiple-choice betting game. Game creator will set the options, playe
 
 ## Usage
 
+### Install
+
+```shell
+$ forge install
+```
+
 ### Build
 
 ```shell
@@ -73,6 +79,23 @@ $ forge build
 ```shell
 $ forge test
 ```
+
+### Deploy
+
+* Create `.env` in the project and set following variable
+
+```
+# your private key
+P_KEY = 0x0123....
+```
+
+* Update foundry.toml to replace SEPOLIA_RPC_URL & ETHERSCAN_API_KEY to your information
+
+* run the following command to deploy DexVegas contract
+
+```shell
+$ forge script script/Deploy.s.sol:DexVegasScript --rpc-url "${RPC_URL}" --broadcast --verify
+````
 
 ## Future work
 

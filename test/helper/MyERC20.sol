@@ -13,4 +13,8 @@ contract MyERC20 is ERC20 {
     function decimals() public view override returns (uint8) {
         return decimal;
     }
+
+    function mint(uint mintAmount_) external {
+        _mint(msg.sender, mintAmount_);
+    }
 }
