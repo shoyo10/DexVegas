@@ -36,7 +36,7 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
             lotteryDrawTime: 200,
             options: options,
             playerUpperLimit: 0,
-            whiteListMerkleRoot: bytes32(0)
+            whitelistMerkleRoot: bytes32(0)
         });
         vm.expectEmit(true, false, true, true);
         emit GameMultipleChoiceCreated(user1, address(0));
@@ -70,7 +70,7 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
             lotteryDrawTime: block.timestamp + 200,
             options: options,
             playerUpperLimit: 0,
-            whiteListMerkleRoot: bytes32(0)
+            whitelistMerkleRoot: bytes32(0)
         });
         vm.expectEmit(true, false, true, true);
         emit GameMultipleChoiceCreated(user1, address(0));
@@ -116,7 +116,7 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
             lotteryDrawTime: 200,
             options: options,
             playerUpperLimit: 3,
-            whiteListMerkleRoot: bytes32(0)
+            whitelistMerkleRoot: bytes32(0)
         });
         vm.expectEmit(true, false, true, true);
         emit GameMultipleChoiceCreated(user1, address(0));
@@ -143,7 +143,7 @@ contract GMultipleChoiceFactoryTest is Test, IGMultipleChoiceFactory {
             lotteryDrawTime: 200,
             options: options,
             playerUpperLimit: 0,
-            whiteListMerkleRoot: bytes32(0)
+            whitelistMerkleRoot: bytes32(0)
         });
         vm.expectEmit(true, false, true, true);
         emit GameMultipleChoiceCreated(address(this), address(0));

@@ -33,7 +33,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
     string[] public options;
     address public dToken;
     /// @notice player address whitelist merkle root
-    bytes32 public whiteListMerkleRoot;
+    bytes32 public whitelistMerkleRoot;
 
     /// @notice The index of the answer
     /// @dev The index of the answer; -1 if there is no answer yet
@@ -74,7 +74,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
         lotteryDrawTime = params.lotteryDrawTime;
         playerUpperLimit = params.playerUpperLimit;
         options = params.options;
-        whiteListMerkleRoot = params.whiteListMerkleRoot;
+        whitelistMerkleRoot = params.whitelistMerkleRoot;
     }
 
     /**
@@ -98,7 +98,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
             require(amount <= maxAmount, "betting amount is invalid");
         }
         require(_nextId  <= playerUpperLimit, "game player upper limit reached");
-        if (whiteListMerkleRoot != bytes32(0)) {
+        if (whitelistMerkleRoot != bytes32(0)) {
             require(verifyWhitelist(buyer, merkleProof), "buyer is not in whitelist");
         }
 
@@ -199,6 +199,6 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
 
     function verifyWhitelist(address account, bytes32[] memory merkleProof) internal view returns (bool) {
         bytes32 node = keccak256(abi.encodePacked(account));
-        return MerkleProof.verify(merkleProof, whiteListMerkleRoot, node);
+        return MerkleProof.verify(merkleProof, whitelistMerkleRoot, node);
     }
 }

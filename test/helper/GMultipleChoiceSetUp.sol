@@ -42,7 +42,7 @@ contract GMultipleChoiceSetUp is Test, IGMultipleChoiceFactory {
             lotteryDrawTime: lotteryDrawTime,
             options: options,
             playerUpperLimit: 0,
-            whiteListMerkleRoot: bytes32(0)
+            whitelistMerkleRoot: bytes32(0)
         });
         gameAddress = factory.createGame(createGameParams);
         vm.stopPrank();

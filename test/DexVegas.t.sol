@@ -91,7 +91,7 @@ contract DexVagasTest is Test {
             lotteryDrawTime: lotteryDrawTime,
             options: options,
             playerUpperLimit: 0,
-            whiteListMerkleRoot: bytes32(0)
+            whitelistMerkleRoot: bytes32(0)
         });
         address gameAddress = GMultipleChoiceFactory(factoryAddress).createGame(createGameParams);
         vm.stopPrank();

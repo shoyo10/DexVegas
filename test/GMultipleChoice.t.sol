@@ -148,7 +148,7 @@ contract GMultipleChoiceTest is GMultipleChoiceSetUp {
             lotteryDrawTime: lotteryDrawTime,
             options: options,
             playerUpperLimit: 0,
-            whiteListMerkleRoot: 0x9f593cdf92e93670ace4ebc0c7a8568c3e943e6a6324cc08cb31e1fdb73a8d5b
+            whitelistMerkleRoot: 0x9f593cdf92e93670ace4ebc0c7a8568c3e943e6a6324cc08cb31e1fdb73a8d5b
         });
         address gameAddress2 = factory.createGame(createGameParams);
         vm.stopPrank();

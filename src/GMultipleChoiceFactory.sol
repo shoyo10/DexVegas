@@ -48,7 +48,7 @@ contract GMultipleChoiceFactory is IGMultipleChoiceFactory, GMultipleChoiceDeplo
             lotteryDrawTime: params_.lotteryDrawTime,
             playerUpperLimit: playerUpperLimit,
             options: params_.options,
-            whiteListMerkleRoot: params_.whiteListMerkleRoot
+            whitelistMerkleRoot: params_.whitelistMerkleRoot
         });
         gameAddress = deploy(params);
         gameList.push(gameAddress);

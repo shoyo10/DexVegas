@@ -15,7 +15,7 @@ interface IGMultipleChoiceDeployerParameters {
         uint lotteryDrawTime;
         uint256 playerUpperLimit;
         string[] options;
-        bytes32 whiteListMerkleRoot;
+        bytes32 whitelistMerkleRoot;
     }
 }
 
