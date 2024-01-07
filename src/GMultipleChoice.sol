@@ -32,7 +32,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
     uint public immutable playerUpperLimit;
     string[] public options;
     address public dToken;
-    /// @notice player address whitelist merkle root
+    /// @notice player addresses whitelist merkle root
     bytes32 public whitelistMerkleRoot;
 
     /// @notice The index of the answer
@@ -82,6 +82,7 @@ contract GMultipleChoice is ERC721, IGMultipleChoice, IGMultipleChoiceDeployerPa
      * @dev user provide DToken and make a choice to bet the game and get a NFT
      * @param amount The amount of DToken to bet
      * @param optionIndex The index of option to bet
+     * @param merkleProof The merkle proof of user addresses
      * @return tokenId The id of NFT
      */
     function betting(uint256 amount, uint256 optionIndex, bytes32[] memory merkleProof) external returns (uint256 tokenId) {
