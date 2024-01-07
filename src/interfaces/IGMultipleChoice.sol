@@ -16,7 +16,7 @@ interface IGMultipleChoice {
         LotteryTicketClaimed claimStatus;
     }
 
-    function betting(uint256 amount, uint256 optionIndex) external returns (uint256 tokenId);
+    function betting(uint256 amount, uint256 optionIndex, bytes32[] calldata merkleProof) external returns (uint256 tokenId);
     function setAnswer(uint256 index) external;
     function winnerClaimAward(uint256 tokenId) external returns (uint256 claimAmount);
     function getOptionsLength() external view returns (uint256);

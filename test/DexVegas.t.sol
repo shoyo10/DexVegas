@@ -90,7 +90,8 @@ contract DexVagasTest is Test {
             closeBetTime: closeBetTime,
             lotteryDrawTime: lotteryDrawTime,
             options: options,
-            playerUpperLimit: 0
+            playerUpperLimit: 0,
+            whiteListMerkleRoot: bytes32(0)
         });
         address gameAddress = GMultipleChoiceFactory(factoryAddress).createGame(createGameParams);
         vm.stopPrank();
@@ -112,34 +113,35 @@ contract DexVagasTest is Test {
 
         vm.startPrank(player1);
         dToken.approve(gameAddress, 1000 * 10 ** dToken.decimals());
-        uint256 tokenId1 = IGMultipleChoice(gameAddress).betting(10 * 10 ** dToken.decimals(), 1);
+        bytes32[] memory merkleProof = new bytes32[](0);
+        uint256 tokenId1 = IGMultipleChoice(gameAddress).betting(10 * 10 ** dToken.decimals(), 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player2);
         dToken.approve(gameAddress, 1000 * 10 ** dToken.decimals());
-        IGMultipleChoice(gameAddress).betting(100 * 10 ** dToken.decimals(), 1);
+        IGMultipleChoice(gameAddress).betting(100 * 10 ** dToken.decimals(), 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player3);
         dToken.approve(gameAddress, 1000 * 10 ** dToken.decimals());
-        IGMultipleChoice(gameAddress).betting(60 * 10 ** dToken.decimals(), 1);
+        IGMultipleChoice(gameAddress).betting(60 * 10 ** dToken.decimals(), 1, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player4);
         dToken.approve(gameAddress, 1000 * 10 ** dToken.decimals());
-        uint256 tokenId4 = IGMultipleChoice(gameAddress).betting(15 * 10 ** dToken.decimals(), 0);
+        uint256 tokenId4 = IGMultipleChoice(gameAddress).betting(15 * 10 ** dToken.decimals(), 0, merkleProof);
         vm.stopPrank();
 
         vm.startPrank(player5);
         dToken.approve(gameAddress, 1000 * 10 ** dToken.decimals());
-        uint256 tokenId5 = IGMultipleChoice(gameAddress).betting(8 * 10 ** dToken.decimals(), 0);
+        uint256 tokenId5 = IGMultipleChoice(gameAddress).betting(8 * 10 ** dToken.decimals(), 0, merkleProof);
         vm.stopPrank();
 
         vm.warp(closeBetTime);
 
         vm.startPrank(player5);
         vm.expectRevert(bytes("game is closed"));
-        IGMultipleChoice(gameAddress).betting(8 * 1e18, 0);
+        IGMultipleChoice(gameAddress).betting(8 * 1e18, 0, merkleProof);
         vm.stopPrank();
 
         vm.warp(lotteryDrawTime);

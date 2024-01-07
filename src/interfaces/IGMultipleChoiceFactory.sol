@@ -13,6 +13,7 @@ interface IGMultipleChoiceFactoryBase {
      * @param lotteryDrawTime after this time, can determine the result of the game
      * @param options options for the game
      * @param playerUpperLimit_ game player limit
+     * @param whiteListMerkleRoot player address whitelist merkle root
      */
     struct CreateGameParams {
         string name;
@@ -24,6 +25,7 @@ interface IGMultipleChoiceFactoryBase {
         uint lotteryDrawTime;
         string[] options;
         uint256 playerUpperLimit;
+        bytes32 whiteListMerkleRoot;
     }
 }
 
